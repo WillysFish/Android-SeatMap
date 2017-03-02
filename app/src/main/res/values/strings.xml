@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">SeatMap</string>
+    <string name="seatMap_commitPost">確認送出</string>
+</resources>
