@@ -49,20 +49,16 @@ public class SeatSetting {
     private int seatSpaceBmpId = R.drawable.seat_crying;
     private int arrowBmpId = R.drawable.arrow;
 
-    //座位資料、已選座位資料
-    private SparseArray<SeatView> data, selectedSeatData = new SparseArray<SeatView>();
 
-    public SeatSetting(SparseArray<SeatView> data) {
-        this.data = data;
+    public SeatSetting() {
     }
 
-    public SeatSetting(SparseArray<SeatView> data, boolean isScreenOrientationUp, int maxBuyCount, int minBuyCount, boolean isProhibitSpaceSeatRule) {
-        this.data = data;
-        this.isScreenOrientationUp = isScreenOrientationUp;
-        this.maxBuyCount = maxBuyCount;
-        this.minBuyCount = minBuyCount;
-        this.isProhibitSpaceSeatRule = isProhibitSpaceSeatRule;
-    }
+//    public SeatSetting(boolean isScreenOrientationUp, int maxBuyCount, int minBuyCount, boolean isProhibitSpaceSeatRule) {
+//        this.isScreenOrientationUp = isScreenOrientationUp;
+//        this.maxBuyCount = maxBuyCount;
+//        this.minBuyCount = minBuyCount;
+//        this.isProhibitSpaceSeatRule = isProhibitSpaceSeatRule;
+//    }
 
     //======= Setter method =======
 
@@ -257,44 +253,6 @@ public class SeatSetting {
         return this;
     }
 
-    /**
-     * 設定己選擇的座位資料，將在初始UI時顯示出來
-     * @param selectedSeatData
-     */
-    public SeatSetting setSelectedSeatData(SparseArray<SeatView> selectedSeatData) {
-        this.selectedSeatData = selectedSeatData;
-        return this;
-    }
-
-    /**
-     * 設定己選擇的座位資料，將在初始UI時顯示出來
-     * @param selectedJSONArray
-     */
-    public SeatSetting setSelectedSeatDataByJSONArray(JSONArray selectedJSONArray) {
-        SparseArray<SeatView> selectedSeatData = new SparseArray<>();
-        for (int i = 0 ;i<selectedJSONArray.length();i++){
-            JSONObject object = selectedJSONArray.optJSONObject(i);
-            SeatView seatView = new SeatView(object.optInt("index")
-                    ,object.optInt("x")
-                    ,object.optInt("y")
-                    ,object.optInt("state")
-                    ,object.optString("row")
-                    ,object.optString("col")
-                    ,object.optString("area"));
-            selectedSeatData.put(seatView.index(),seatView);
-        }
-        return setSelectedSeatData(selectedSeatData);
-    }
-
-    /**
-     * 設定所有座位的初始資料
-     * @param data
-     */
-    public SeatSetting setData(SparseArray<SeatView> data) {
-        this.data = data;
-        return this;
-    }
-
     //======= Getter method =======
 
     public boolean isScreenOrientationUp() {
@@ -379,13 +337,5 @@ public class SeatSetting {
 
     public int getArrowBmpId() {
         return arrowBmpId;
-    }
-
-    public SparseArray<SeatView> getData() {
-        return data;
-    }
-
-    public SparseArray<SeatView> getSelectedSeatData() {
-        return selectedSeatData;
     }
 }

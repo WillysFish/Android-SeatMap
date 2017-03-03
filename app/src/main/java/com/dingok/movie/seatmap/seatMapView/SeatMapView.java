@@ -41,6 +41,7 @@ public class SeatMapView extends SurfaceView implements SurfaceHolder.Callback, 
 
     Context cont;
     SeatSetting seatSetting;
+    SeatDataFactory seatDataFactory;
     LruCache<Integer, Bitmap> bmpCache;
     SparseArray<SeatView> data;
 
@@ -64,19 +65,21 @@ public class SeatMapView extends SurfaceView implements SurfaceHolder.Callback, 
     GestureDetector mGestureDetector;
 //    ScaleGestureDetector mScaleGestureDetector;
 
-    public SeatMapView(Context context, SeatSetting seatSetting) {
+    public SeatMapView(Context context, SeatSetting seatSetting,SeatDataFactory seatDataFactory) {
         super(context);
 
         cont = context;
         this.seatSetting = seatSetting;
+        this.seatDataFactory = seatDataFactory;
 
-        data = seatSetting.getData();
+        data = seatDataFactory.convertedData;
+        selectedSeatData = seatDataFactory.selectedSeatData;
+
         isProhibitSpaceSeatRule = seatSetting.isProhibitSpaceSeatRule();
         isScreenOrientationUp = seatSetting.isScreenOrientationUp();
         seatSizeScale = seatSetting.getSeatSizeScale();
         screenSplitY = seatSetting.getScreenSplitY();
         zoom = seatSetting.getZoom();
-        selectedSeatData = seatSetting.getSelectedSeatData();
         maxBuyCount = seatSetting.getMaxBuyCount();
         minBuyCount = seatSetting.getMinBuyCount();
 

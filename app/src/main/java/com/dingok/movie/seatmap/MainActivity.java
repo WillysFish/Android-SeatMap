@@ -38,8 +38,11 @@ public class MainActivity extends AppCompatActivity {
         seatContainer = (FrameLayout) findViewById(R.id.seatMap_container);
         commitButton = (Button) findViewById(R.id.seatMap_commitPostButton);
 
+        //new 一個預設的 dataFactory
+        SeatDataFactory seatDataFactory = new SeatDataFactory();
+
         //new 一個基本的 setting
-        SeatSetting seatSetting = new SeatSetting(SeatDataFactory.testSeatData())
+        SeatSetting seatSetting = new SeatSetting()
                 .setScreenOrientationUp(false)
                 .setProhibitSpaceSeatRule(true)
 //                .setScreenSplitY(0.5f)
@@ -61,13 +64,13 @@ public class MainActivity extends AppCompatActivity {
         if (getIntent().getBooleanExtra("isModify",false) ){
             try {
                 JSONArray selectedJSONArray = new JSONArray(getIntent().getStringExtra("selectedDataStr"));
-                seatSetting.setSelectedSeatDataByJSONArray(selectedJSONArray);
+                seatDataFactory.setSelectedSeatDataByJSONArray(selectedJSONArray);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
 
-        seatMapView = new SeatMapView(this, seatSetting);
+        seatMapView = new SeatMapView(this, seatSetting,seatDataFactory);
         seatContainer.addView(seatMapView);
 
         commitButton.setOnClickListener(new View.OnClickListener() {
