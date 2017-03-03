@@ -1,11 +1,9 @@
 package com.dingok.movie.seatmap.seatMapView;
 
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PointF;
@@ -29,9 +27,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 
 /**
  * Created by yanzewei on 2017/2/15.
@@ -46,24 +42,39 @@ public class SeatMapView extends SurfaceView implements SurfaceHolder.Callback, 
     SparseArray<SeatView> data;
 
     Paint paint = new Paint();
-    int width, height, centerX, centerY, maxBuyCount, minBuyCount;
-    int seatXMin, seatXMax, seatYMin, seatYMax, bmpWidth, bmpHeight;
-    float seatSizeScale = 1, screenSplitY = 0.6f, zoomMin = 0.5f, zoomMax = 3, zoom = 2f, scale, stepX, stepY;
-    RectF lowerZone, upperZone, seatAreaOrginalSize, seatAreaScaledSize, cube = new RectF(), pos = new RectF(), needShow = new RectF();
-    PointF lastPoint, firstPoint = new PointF(), lastCube = new PointF(), cubeTarget = new PointF();
-    boolean dragLowerZone = false, dragUpperZone = false, isScreenOrientationUp = true, isProhibitSpaceSeatRule = false;//, fling = false
+
+    int width, height;
+    int bmpWidth, bmpHeight;
+    int centerX, centerY;
+    int seatXMin, seatXMax, seatYMin, seatYMax;
+    int maxBuyCount, minBuyCount;
+
+    float seatSizeScale = 1, screenSplitY = 0.6f;
+    float zoom = 2f;
+    float scale, stepX, stepY;
+
+    boolean dragLowerZone = false
+            , dragUpperZone = false
+            , isScreenOrientationUp = true
+            , isProhibitSpaceSeatRule = false;
+
+    RectF lowerZone, upperZone;
+    RectF seatAreaOrginalSize, seatAreaScaledSize;
+    RectF cube = new RectF(), pos = new RectF(), needShow = new RectF();
+
+    PointF lastPoint, firstPoint = new PointF();
+    PointF lastCube = new PointF(), cubeTarget = new PointF();
 
     SparseArray<SeatView> selectedSeatData;
     SparseArray<SeatView> cryingSeat = new SparseArray<SeatView>();
 
-    HashMap<String, Float> rulerValueX = new HashMap<String, Float>(), rulerValueY = new HashMap<String, Float>();
-    Map<String, String> rulerTextX = new HashMap<String, String>(), rulerTextY = new HashMap<String, String>();
-
     TextPaint textPaint = new TextPaint();
 
-
     GestureDetector mGestureDetector;
-//    ScaleGestureDetector mScaleGestureDetector;
+
+    private SeatMapView(Context context){
+        super(context);
+    }
 
     public SeatMapView(Context context, SeatSetting seatSetting,SeatDataFactory seatDataFactory) {
         super(context);
@@ -90,7 +101,6 @@ public class SeatMapView extends SurfaceView implements SurfaceHolder.Callback, 
         setOnTouchListener(this);
 
         mGestureDetector = new GestureDetector(cont, this);
-//        mScaleGestureDetector = new ScaleGestureDetector(cont, this);
     }
 
     @Override
@@ -104,7 +114,6 @@ public class SeatMapView extends SurfaceView implements SurfaceHolder.Callback, 
         centerY = height / 2;
 
         initStage();
-
     }
 
     Bitmap getBmp(int id) {
@@ -125,8 +134,7 @@ public class SeatMapView extends SurfaceView implements SurfaceHolder.Callback, 
                     bmp = BitmapFactory.decodeResource(cont.getResources(), seatSetting.getSeatHoldBmpId());// 保留
                     break;
                 case 5:
-//                    bmp = BitmapFactory.decodeResource(cont.getResources(), seatSetting.getSeatSpaceBmpId());// 哭臉
-                    bmp = BitmapFactory.decodeResource(cont.getResources(), seatSetting.getSeatBmpId());// 可選
+                    bmp = BitmapFactory.decodeResource(cont.getResources(), seatSetting.getSeatBmpId());// 哭泣改可選
                     break;
                 case 6:
                     bmp = BitmapFactory.decodeResource(cont.getResources(), seatSetting.getArrowBmpId());// 觀賞方向
@@ -162,13 +170,9 @@ public class SeatMapView extends SurfaceView implements SurfaceHolder.Callback, 
                     return;
                 upperZone = new RectF(0, 0, width, height * screenSplitY);
                 lowerZone = new RectF(0, height * screenSplitY, width, height);
-                //抗線的鋸齒, 打开抗锯齿。抗锯齿是依赖于算法的，算法决定抗锯齿的效率
-                //在我们绘制棱角分明的图像时，比如一个矩形、一张位图，我们不需要打开抗锯齿。
+
                 paint.setAntiAlias(true);
-                //抗圖的鋸齒，如果该项设置为true
-                //则图像在动画进行中会滤掉对Bitmap图像的优化操作，加快显示速度
                 paint.setFilterBitmap(true);
-                //抗抖動(讓兩色之間的漸層色更細膩
                 paint.setDither(true);
 
                 // 取行、列總值
@@ -196,29 +200,17 @@ public class SeatMapView extends SurfaceView implements SurfaceHolder.Callback, 
                 bmpHeight = getBmp(1).getHeight();
                 float spaceV = bmpHeight * seatSetting.getSeatSpaceY();// 0是每一排上下的間距
                 float spaceH = bmpWidth * seatSetting.getSeatSpaceX();// -0.15是每個位子左右的間距
-                //-spaceH because add spaceH more one.
                 seatAreaOrginalSize = new RectF(0, 0, (float) Math.ceil(((bmpWidth + spaceH) * seatH) - spaceH),
                         (float) Math.ceil(((bmpHeight + spaceV) * seatV) - spaceV));
 
                 // 計算縮小比例
                 float smallSeatRatio = lowerZone.width() / lowerZone.height();
                 float needSeatRatio = (float) seatAreaOrginalSize.width() / seatAreaOrginalSize.height();
-                //scale width or height make small zone matched size.
                 if (needSeatRatio < smallSeatRatio) {
                     scale = lowerZone.height() / seatAreaOrginalSize.height();
                 } else {
                     scale = lowerZone.width() / seatAreaOrginalSize.width();
                 }
-
-//                //計算最小縮放比例
-//                float bigSeatRatio=upperZone.width()/upperZone.height();
-//                if(needSeatRatio<bigSeatRatio){
-//                    zoomMin= Math.max(zoomMin, upperZone.width()/seatAreaOrginalSize.width());
-//                }else{
-//                    zoomMin= Math.max(zoomMin, upperZone.height()/seatAreaOrginalSize.height());
-//                }
-//				System.out.println("zoomMin "+zoomMin+" scale "+scale);
-
 
                 // 繪製椅子的區域
                 seatAreaScaledSize = new RectF(0, 0, seatAreaOrginalSize.width() * scale, seatAreaOrginalSize.height() * scale);
@@ -237,31 +229,14 @@ public class SeatMapView extends SurfaceView implements SurfaceHolder.Callback, 
                 stepY = (bmpHeight + spaceV);
 
                 // 畫底色
-//				canvas.clipRect(0, 0, width, height, Op.REPLACE);
                 paint.setStyle(Paint.Style.FILL);
                 paint.setColor(seatSetting.getUpperZoneBackgroundColor());
                 canvas.drawRect(upperZone, paint);
                 paint.setColor(seatSetting.getLowerZoneBackgroundColor());
                 canvas.drawRect(lowerZone, paint);
 
-                // 起始座標
-                int startX = (int) seatAreaScaledSize.left;
-                int startY = (int) seatAreaScaledSize.top;
-
                 // 繪製椅子
-                for (int a = 0; a < data.size(); a++) {
-                    SeatView holder = (SeatView) data.get(a);
-                    if (holder.state() == 0 || holder.state() == 200)
-                        continue;
-                    // 1.0是保留左邊半個坐位的空間
-                    int seatX = (int) (startX + (holder.x() - seatXMin + 1.0) * stepX * scale);
-                    int seatY = (int) (startY + (holder.y() - seatYMin + 1.0) * stepY * scale);
-                    canvas.save();
-                    canvas.scale(scale, scale, seatX, seatY);
-                    canvas.drawBitmap(getBmp(holder.state()), seatX, seatY, null);
-                    canvas.restore();
-                }
-
+                drawSeatOfScaledZone(canvas,data);
 
                 Logger.e("bmpWidth = " + bmpWidth + "\n"
                         + "bmpHeight = " + bmpHeight + "\n"
@@ -288,43 +263,10 @@ public class SeatMapView extends SurfaceView implements SurfaceHolder.Callback, 
 
         // 繪製下方區塊
         canvas.clipRect(lowerZone, Region.Op.REPLACE);
-        // Op.DIFFERENCE，实际上就是求得的A和B的差集范围，即A－B，只有在此范围内的绘制内容才会被显示；
-        // Op.REVERSE_DIFFERENCE，实际上就是求得的B和A的差集范围，即B－A，只有在此范围内的绘制内容才会被显示；；
-        // Op.INTERSECT，即A和B的交集范围，只有在此范围内的绘制内容才会被显示；
-        // Op.REPLACE，不论A和B的集合状况，B的范围将全部进行显示，如果和A有交集，则将覆盖A的交集范围；
-        // Op.UNION，即A和B的并集范围，即两者所包括的范围的绘制内容都会被显示；
-        // Op.XOR，A和B的补集范围，此例中即A除去B以外的范围，只有在此范围内的绘制内容才会被显示；
 
         // 繪製縮圖中 被選中的椅子
         paint.setAlpha(255);
-        if (selectedSeatData.size() > 0) {
-            for (int i = 0; i < selectedSeatData.size(); i++) {
-                SeatView holder = selectedSeatData.valueAt(i);
-
-                // 1.0是保留左邊半個坐位的空間
-                int seatX = (int) (seatAreaScaledSize.left + (holder.x() - seatXMin + 1.0) * stepX * scale);
-                int seatY = (int) (seatAreaScaledSize.top + (holder.y() - seatYMin + 1.0) * stepY * scale);
-                canvas.save();
-                canvas.scale(scale, scale, seatX, seatY);
-                canvas.drawBitmap(getBmp(2), seatX, seatY, paint);
-                canvas.restore();
-            }
-        }
-
-        // 繪製縮圖中 哭泣的椅子
-        if (cryingSeat.size() > 0 && isProhibitSpaceSeatRule) {
-            for (int i = 0; i < cryingSeat.size(); i++) {
-                SeatView map = cryingSeat.valueAt(i);
-
-                // 1.0是保留左邊半個坐位的空間
-                int seatX = (int) (seatAreaScaledSize.left + (map.x() - seatXMin + 1.0) * stepX * scale);
-                int seatY = (int) (seatAreaScaledSize.top + (map.y() - seatYMin + 1.0) * stepY * scale);
-                canvas.save();
-                canvas.scale(scale, scale, seatX, seatY);
-                canvas.drawBitmap(getBmp(5), seatX, seatY, paint);
-                canvas.restore();
-            }
-        }
+        drawSeatOfScaledZone(canvas,selectedSeatData);
 
         // 更新 cube 的位置
         if (dragUpperZone) {
@@ -367,16 +309,11 @@ public class SeatMapView extends SurfaceView implements SurfaceHolder.Callback, 
         needShow.right = seatAreaOrginalSize.width() * pos.right;
         needShow.bottom = seatAreaOrginalSize.height() * pos.bottom;
 
-        // 用來繪製尺標的資訊
-        rulerValueX.clear();
-        rulerTextX.clear();
-        rulerValueY.clear();
-        rulerTextY.clear();
-
         // 繪製上方大椅子
         canvas.clipRect(upperZone, Region.Op.REPLACE);
         paint.setStyle(Paint.Style.FILL);
         paint.setAlpha(255);
+
         // 輪詢每一個坐位、算出坐位的左上座標
         for (int i = 0; i < data.size(); i++) {
             SeatView holder = (SeatView) data.get(i);
@@ -403,7 +340,7 @@ public class SeatMapView extends SurfaceView implements SurfaceHolder.Callback, 
 
                 //如果是空位才畫座位號碼標誌
                 if (bmpId == 1 || bmpId == 5) {
-
+                    //準備畫文字的paint
                     int smallTextSizeDp = (int) (10 * seatSizeScale);
                     int smallTextAreaWidth = (int) convertDpToPixel(smallTextSizeDp, cont);
                     paint.setColor(seatSetting.getNotificationTextColor());
@@ -424,14 +361,6 @@ public class SeatMapView extends SurfaceView implements SurfaceHolder.Callback, 
                     }
                 }
                 canvas.restore();
-//                if (!rulerTextX.containsKey(holder.col())) {
-//                    rulerTextX.put(holder.col(), String.valueOf(holder.col()));
-//                    rulerValueX.put(holder.col(), newX + bmpWidth / 2 * zoom);
-//                }
-//                if (!rulerTextY.containsKey(holder.row())) {
-//                    rulerTextY.put(holder.row(), String.valueOf(holder.row()));
-//                    rulerValueY.put(holder.row(), newY + bmpHeight / 2 * zoom);
-//                }
             }
         }
 
@@ -441,37 +370,6 @@ public class SeatMapView extends SurfaceView implements SurfaceHolder.Callback, 
         // 繪製文字區域背景
         int textSizeDp = seatSetting.getNotificationTextSizeDp();
         int textAreaWidth = (int) convertDpToPixel(textSizeDp, cont);
-//        canvas.clipRect(upperZone.left, upperZone.top, upperZone.right, upperZone.top + textAreaWidth, Region.Op.REPLACE);
-//        canvas.drawColor(0x99000000);
-//        canvas.clipRect(upperZone.left, upperZone.top + textAreaWidth, upperZone.left + textAreaWidth, upperZone.bottom, Region.Op.REPLACE);
-//        canvas.drawColor(0x99000000);
-
-//        // 繪製文字 邊邊小文字
-//        int smallTextSizeDp = 10;
-//        int smallTextAreaWidth = (int) convertDpToPixel(smallTextSizeDp, cont);
-//        canvas.clipRect(upperZone, Region.Op.REPLACE);
-//        paint.setColor(0x99ffffff);
-//        paint.setTextAlign(Paint.Align.CENTER);
-//        paint.setTextSize(smallTextAreaWidth);
-//
-//        // 這是讓文字垂直置中的算法
-//        Paint.FontMetrics fontMetrics = paint.getFontMetrics();
-//        float offY = (fontMetrics.bottom - fontMetrics.top) / 2 - fontMetrics.bottom;
-//
-//        // 繪製水平文字
-//        canvas.clipRect(upperZone.left + textAreaWidth, upperZone.top, upperZone.right, upperZone.top + textAreaWidth, Region.Op.REPLACE);
-//        for (String key : rulerTextX.keySet()) {
-//            float txtX = rulerValueX.get(key);
-//            float txtY = upperZone.top + textAreaWidth / 2 + offY;
-//            canvas.drawText(rulerTextX.get(key), txtX, txtY, paint);
-//        }
-//        // 繪製垂直文字
-//        canvas.clipRect(upperZone.left, upperZone.top + textAreaWidth, upperZone.left + textAreaWidth, upperZone.bottom, Region.Op.REPLACE);
-//        for (String key : rulerTextY.keySet()) {
-//            float txtX = upperZone.left + textAreaWidth / 2;
-//            float txtY = rulerValueY.get(key) + offY;
-//            canvas.drawText(rulerTextY.get(key), txtX, txtY, paint);
-//        }
 
         //繪製已選數量文字
         canvas.clipRect(upperZone, Region.Op.REPLACE);
@@ -489,22 +387,34 @@ public class SeatMapView extends SurfaceView implements SurfaceHolder.Callback, 
         textPaint.setTextSize(textAreaWidth);
         textPaint.setAntiAlias(true);
         textPaint.setFakeBoldText(true);
-//		System.out.println(width+" "+textAreaWidth+" "+getBmp(5).getWidth()+" "+(width-textAreaWidth-getBmp(5).getWidth()));
-        /**
-         * 需要分行的字符串
-         * 画笔对象
-         * layout的宽度，字符串超出宽度时自动换行。
-         * layout的对其方式，有ALIGN_CENTER， ALIGN_NORMAL， ALIGN_OPPOSITE 三种。
-         * 相对行间距，相对字体大小，1.5f表示行间距为1.5倍的字体高度。
-         * 在基础行距上添加多少
-         * 实际行间距等于这两者的和。
-         */
-        StaticLayout layout = new StaticLayout(prompt, textPaint, width - textAreaWidth - getBmp(6).getWidth(), Layout.Alignment.ALIGN_NORMAL, 1.0F, 0.0F, true);
+
+        StaticLayout layout = creatStaticLayoutForOnDraw(prompt, textPaint, width - textAreaWidth - getBmp(6).getWidth(), Layout.Alignment.ALIGN_NORMAL, 1.0F, 0.0F, true);
         canvas.save();
-        //StaticLayout是默认画在Canvas的(0,0)点的，如果需要调整位置只能在draw之前用Canvas.translate移動起始坐标
+        //StaticLayout是默認畫在Canvas的(0,0)，如果需要調整位置只能在draw之前用Canvas.translate移動起始坐標
         canvas.translate(upperZone.left + textAreaWidth, upperZone.bottom - layout.getHeight());
         layout.draw(canvas);
         canvas.restore();
+    }
+
+    private StaticLayout creatStaticLayoutForOnDraw (CharSequence source, TextPaint paint, int width, Layout.Alignment align, float spacingmult, float spacingadd, boolean includepad) {
+       return new StaticLayout(source, paint, width, align, spacingmult, spacingadd, includepad);
+    }
+
+    private void drawSeatOfScaledZone(Canvas canvas, SparseArray<SeatView> seatData){
+        if (seatData.size() > 0) {
+            for (int i = 0; i < seatData.size(); i++) {
+                SeatView holder = seatData.valueAt(i);
+                if (holder.state() == 0 || holder.state() == 200)
+                    continue;
+                // 1.0是保留左邊半個坐位的空間
+                int seatX = (int) (seatAreaScaledSize.left + (holder.x() - seatXMin + 1.0) * stepX * scale);
+                int seatY = (int) (seatAreaScaledSize.top + (holder.y() - seatYMin + 1.0) * stepY * scale);
+                canvas.save();
+                canvas.scale(scale, scale, seatX, seatY);
+                canvas.drawBitmap(getBmp(holder.state()), seatX, seatY, paint);
+                canvas.restore();
+            }
+        }
     }
 
     @Override
@@ -533,13 +443,11 @@ public class SeatMapView extends SurfaceView implements SurfaceHolder.Callback, 
                     dragLowerZone = false;
                     dragUpperZone = true;
                 }
-//                fling = false;
                 break;
             case MotionEvent.ACTION_MOVE:// 2=移動
                 if (motionEvent.getPointerCount() < 2) {
                     lastPoint.set(motionEvent.getX(), motionEvent.getY());
                 }
-
                 break;
             case MotionEvent.ACTION_UP:// 1=放開
                 view.performClick();
@@ -551,7 +459,6 @@ public class SeatMapView extends SurfaceView implements SurfaceHolder.Callback, 
         }
 
         mGestureDetector.onTouchEvent(motionEvent);
-//        mScaleGestureDetector.onTouchEvent(motionEvent);
 
         //使view無效，如果正在顯示，則called onDraw
         invalidate();
@@ -599,7 +506,7 @@ public class SeatMapView extends SurfaceView implements SurfaceHolder.Callback, 
             for (int i = 0; i < data.size(); i++) {
                 SeatView holder = (SeatView) data.get(i);
                 // 坐位若是不可選則略過
-                if (holder.state() != 1)
+                if (holder.state() != 1 && holder.state() != 2)
                     continue;
                 // 1.0是保留左邊半個坐位的空間
                 int seatX = (int) ((holder.x() - seatXMin + 1.0) * stepX);
@@ -607,8 +514,10 @@ public class SeatMapView extends SurfaceView implements SurfaceHolder.Callback, 
                 // 比對 rect 與 point 是否重疊
                 if (new RectF(seatX, seatY, seatX + stepX, seatY + stepY).contains(tarX, tarY)) {
                     if (selectedSeatData.get(holder.index()) == null && selectedSeatData.size() < maxBuyCount) {
+                        holder.setState(2);
                         selectedSeatData.put(holder.index(), holder);
                     } else {
+                        holder.setState(1);
                         selectedSeatData.remove(holder.index());
                     }
                     if (selectedSeatData.size() > 0 && !checkRule() && isProhibitSpaceSeatRule) {
@@ -619,40 +528,6 @@ public class SeatMapView extends SurfaceView implements SurfaceHolder.Callback, 
         }
         return true;
     }
-
-    /**
-     * clear Seat
-     */
-    public void clearSeat() {
-        selectedSeatData.clear();
-        cryingSeat.clear();
-        invalidate();
-    }
-
-//    /**
-//     * 如已選過座位，則設定勾選
-//     *
-//     * @param order 己選訂單
-//     */
-//    public void setOrder(JSONArray order) {
-//        for (int a = 0; a < order.length(); a++) {
-//            JSONObject jo = order.optJSONObject(a);
-//            if (jo == null) continue;
-//            int index = jo.optInt("index", -1);
-//            int x = jo.optInt("x", -1);
-//            int y = jo.optInt("y", -1);
-//            int state = jo.optInt("state", -1);
-//            String row = jo.optString("row", null);
-//            String col = jo.optString("col", null);
-//            String area = jo.optString("area", null);
-//            if (index == -1 || x == -1 || y == -1 || state == -1 || row == null || col == null || area == null)
-//                continue;
-//            if (selectedSeatData.get(index) == null && selectedSeatData.size() < maxBuyCount) {
-//                selectedSeatData.put(index, new SeatView(index, x, y, state, row, col, area));
-//            }
-//        }
-//        invalidate();
-//    }
 
     //選位規則，不能跳過一個空位
     boolean checkRule() {
@@ -706,7 +581,7 @@ public class SeatMapView extends SurfaceView implements SurfaceHolder.Callback, 
         return flag;
     }
 
-    public JSONArray getResultByJSONArray() {
+    public JSONArray getResultOfJSONArray() {
         JSONArray result = new JSONArray();
         for (int a = 0; a < selectedSeatData.size(); a++) {
             SeatView holder = (SeatView) selectedSeatData.valueAt(a);
@@ -725,6 +600,15 @@ public class SeatMapView extends SurfaceView implements SurfaceHolder.Callback, 
             }
         }
         return result;
+    }
+
+    /**
+     * clear Seat
+     */
+    public void clearSeat() {
+        selectedSeatData.clear();
+        cryingSeat.clear();
+        invalidate();
     }
 
     public static float convertDpToPixel(float dp, Context context) {

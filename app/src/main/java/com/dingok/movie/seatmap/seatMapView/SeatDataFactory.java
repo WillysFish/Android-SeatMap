@@ -14,7 +14,7 @@ public class SeatDataFactory {
     public SparseArray<SeatView> convertedData, selectedSeatData = new SparseArray<>();
 
     public SeatDataFactory() {
-        this.convertedData = convertOld(getTextDataStr());
+        this.convertedData = convertOld(getTestDataStr());
     }
 
     public SeatDataFactory(String dataStr) {
@@ -101,7 +101,7 @@ public class SeatDataFactory {
         return null;
     }
 
-    private String getTextDataStr() {
+    private String getTestDataStr() {
         return "[\n" +
                 "  {\n" +
                 "  \"AllwaysTrs\" : 0,\n" +

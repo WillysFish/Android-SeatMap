@@ -2,10 +2,8 @@ package com.dingok.movie.seatmap;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.SparseArray;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -13,7 +11,6 @@ import android.widget.FrameLayout;
 import com.dingok.movie.seatmap.seatMapView.SeatDataFactory;
 import com.dingok.movie.seatmap.seatMapView.SeatMapView;
 import com.dingok.movie.seatmap.seatMapView.SeatSetting;
-import com.dingok.movie.seatmap.seatMapView.SeatView;
 import com.orhanobut.logger.Logger;
 
 import org.json.JSONArray;
@@ -79,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
                 //符合規則後送出資料
                 if (seatMapView.check()) {
                     Intent intent = new Intent(activity, LaunchActivity.class);
-                    intent.putExtra("result", seatMapView.getResultByJSONArray().toString());
+                    intent.putExtra("result", seatMapView.getResultOfJSONArray().toString());
                     setResult(Constant.MAIN_ACTIVITY, intent);
                     finish();
                 }

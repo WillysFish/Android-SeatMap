@@ -52,7 +52,7 @@ public class SeatView {
         return _area;
     }
 
-    public void state(int n) {
+    public void setState(int n) {
         _state = n;
     }
 
